@@ -78,7 +78,7 @@ type storeRuntimeCheck struct {
 
 func applySetupStoreConfig(cfg *userConfig, opts setupStoreOptions) (setupStoreResult, error) {
 	switch cfg.Mode {
-	case modeDemo, modeLocalBasic:
+	case modeLocalBasic:
 		cfg.Store = storeConfig{Type: storeSQLite}
 		return setupStoreResult{}, nil
 	case modeLocalShared:

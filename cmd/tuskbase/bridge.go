@@ -17,8 +17,7 @@ type ClientCredential struct {
 	Source string
 }
 
-// CredentialProvider is the client-side auth seam. Local Basic, Local Shared,
-// and future Hosted auth should plug in here instead of changing bridge logic.
+// CredentialProvider is the client-side auth boundary for local daemon modes.
 type CredentialProvider interface {
 	Credential(context.Context, string) (ClientCredential, error)
 }
@@ -86,14 +85,6 @@ func (p LocalSharedProfile) Credential(ctx context.Context, client string) (Clie
 	return ClientCredential{}, fmt.Errorf("Local Shared key %q is missing; run `tuskbase auth add --name %s --role agent`", client, client)
 }
 
-type HostedProfile struct{}
-
-func (HostedProfile) Credential(context.Context, string) (ClientCredential, error) {
-	// TODO(hosted-auth): resolve hosted credentials from OS keychain/OAuth without
-	// changing the bridge transport or MCP client setup shape.
-	return ClientCredential{}, errors.New("Hosted auth is not implemented yet")
-}
-
 func AuthProfileForConfig(cfg userConfig) (AuthProfile, error) {
 	switch cfg.Mode {
 	case modeLocalBasic, "":
@@ -104,10 +95,6 @@ func AuthProfileForConfig(cfg userConfig) (AuthProfile, error) {
 			keys = append(keys, localSharedCredential{Name: key.Name, Key: key.Key})
 		}
 		return LocalSharedProfile{keys: keys}, nil
-	case modeDemo:
-		return nil, errors.New("demo mode does not need bridge auth; use `tuskbase serve`")
-	case "hosted":
-		return HostedProfile{}, nil
 	default:
 		return nil, fmt.Errorf("unsupported auth profile %q", cfg.Mode)
 	}

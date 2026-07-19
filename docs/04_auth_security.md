@@ -7,11 +7,10 @@ Auth in Tuskbase has two jobs:
 1. Attribution: know who or what made a decision.
 2. Access control: decide who or what is allowed to read or write shared memory.
 
-Attribution starts immediately. Stronger access control arrives as Tuskbase moves from local single-user usage to shared and hosted usage.
+Attribution starts immediately. Stronger local access control belongs in Local Shared as usage gets heavier.
 
 Implemented today:
 
-- stdio MCP for Demo mode has no auth.
 - HTTP MCP and optional REST are loopback-only by default.
 - HTTP MCP and optional REST require `Authorization: Bearer <key>` by default.
 - The daemon also mounts a small authenticated loopback local control API for CLI operations; it is separate from the optional debug REST API.
@@ -21,27 +20,12 @@ Implemented today:
 - Authenticated writes derive actor attribution from the authenticated principal and reject mismatched actors.
 - Local key admin supports listing, rotating, and Local Shared named-key management.
 
-## Tiered Auth Model
+## Local Auth Model
 
-| Tier | Transport | Auth posture | Identity posture |
+| Mode | Transport | Auth posture | Identity posture |
 |---|---|---|---|
-| Demo | stdio MCP | no auth | actor attribution in decision records |
 | Local Basic | stdio bridge to loopback HTTP MCP daemon | loopback-only, one local key required | auth-derived `agent:local-api-key` attribution |
 | Local Shared | stdio bridge to loopback HTTP MCP daemon with Postgres direction | named local keys required | auth-derived per-key actor attribution |
-| Hosted | remote HTTP MCP | TLS plus managed auth | workspace/org scoped identity |
-
-## Demo
-
-Demo uses stdio MCP and SQLite.
-
-Security posture:
-
-- no network listener,
-- no auth by default,
-- local process launched by the MCP client,
-- actor attribution still recorded.
-
-This is acceptable because the agent and Tuskbase communicate over stdin/stdout on the same machine.
 
 ## Local Basic
 
@@ -102,22 +86,6 @@ Minimum actor fields:
 
 Current named local keys identify the HTTP client at the transport layer and derive write actors from that identity, so clients cannot impersonate each other by only changing a JSON field.
 
-## Hosted
-
-Hosted is future-facing and requires a stronger model. OAuth and managed API keys belong here, not in Local Shared local setup.
-
-Required posture:
-
-- TLS only,
-- API keys or OAuth-style auth,
-- workspace/org scoping,
-- role-based access,
-- key rotation,
-- key revocation,
-- audit logs,
-- no secrets in logs,
-- clear privacy controls for repo content and decision records.
-
 ## Why Identity Matters
 
 Shared decision memory without identity becomes muddy.
@@ -150,14 +118,13 @@ Initial local permissions can be simple:
 | agent | reader actions plus attach, preflight, and remember |
 | admin | agent actions plus future runtime administration |
 
-Do not add enterprise RBAC before local/shared value is proven. Keep the model small and upgradeable.
+Do not add organization-wide RBAC. Keep the local role model small and upgradeable.
 
 ## Security Defaults
 
 Tuskbase should default to:
 
 - no public network exposure,
-- stdio MCP for Demo,
 - loopback-only HTTP MCP for daemon modes,
 - stdio bridge for normal local MCP client setup, with readiness checks and local daemon recovery,
 - explicit opt-in for non-loopback bind,
@@ -174,5 +141,4 @@ A stronger auth model gives Tuskbase:
 - trust: human-approved decisions can rank above agent guesses,
 - audit: teams can inspect decision history,
 - safety: unknown clients cannot mutate shared memory,
-- revocation: bad or leaked keys can be disabled,
-- hosted readiness: local identity concepts can grow into workspace/org auth.
+- revocation: bad or leaked keys can be disabled.

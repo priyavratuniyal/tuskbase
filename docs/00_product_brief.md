@@ -148,8 +148,8 @@ Do not turn Tuskbase into:
 - a task manager,
 - a wiki replacement,
 - a dashboard-first product,
-- an enterprise governance suite,
-- a cloud sync platform before local value is proven.
+- an organization governance suite,
+- a cloud sync platform.
 
 Generic facts may be stored only when they support repo context, decisions, claims, or handoff.
 
@@ -162,7 +162,7 @@ Generic facts may be stored only when they support repo context, decisions, clai
 - Canonical records live behind replaceable store interfaces.
 - Vector indexes are rebuildable.
 - Local canonical memory should have inspectable backups outside the primary SQLite file or Docker volume.
-- Local-first value comes before cloud features.
+- Local-first value is the product boundary.
 - API and MCP should work before UI polish or SDKs.
 - Agents need concise, action-oriented output.
 - Humans need clear lineage, not decorative UI.

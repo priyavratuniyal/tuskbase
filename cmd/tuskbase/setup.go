@@ -20,7 +20,6 @@ import (
 )
 
 const (
-	modeDemo        = "demo"
 	modeLocalBasic  = "local-basic"
 	modeLocalShared = "local-shared"
 	defaultAddr     = "127.0.0.1:8765"
@@ -54,22 +53,18 @@ func (cfg userConfig) HasAuth() bool {
 }
 
 func (cfg userConfig) daemonMCPEnabled() bool {
-	return cfg.Mode != modeDemo && cfg.Daemon.MCPEnabled
+	return cfg.Daemon.MCPEnabled
 }
 
 func (cfg userConfig) daemonRESTEnabled() bool {
-	return cfg.Mode != modeDemo && cfg.Daemon.RESTEnabled
+	return cfg.Daemon.RESTEnabled
 }
 
 func (cfg userConfig) daemonAutostartEnabled() bool {
-	return cfg.Mode != modeDemo && cfg.Daemon.AutostartEnabled
+	return cfg.Daemon.AutostartEnabled
 }
 
 func applyDaemonDefaults(cfg *userConfig) {
-	if cfg.Mode == modeDemo {
-		cfg.Daemon = daemonSurfaceConfig{MCPEnabled: false, RESTEnabled: false, AutostartEnabled: false}
-		return
-	}
 	if !cfg.Daemon.MCPEnabled && !cfg.Daemon.RESTEnabled && !cfg.Daemon.AutostartEnabled {
 		cfg.Daemon = daemonSurfaceConfig{MCPEnabled: true, RESTEnabled: false, AutostartEnabled: true}
 		return
@@ -82,7 +77,7 @@ func applyDaemonDefaults(cfg *userConfig) {
 func runSetup(args []string, stdout, stderr io.Writer) error {
 	fs := flag.NewFlagSet("setup", flag.ContinueOnError)
 	fs.SetOutput(stderr)
-	mode := fs.String("mode", modeLocalBasic, "demo, local-basic, or local-shared")
+	mode := fs.String("mode", modeLocalBasic, "local-basic or local-shared")
 	clients := fs.String("client", "", "comma-separated clients to show after setup: codex, claude, cursor, generic, or all")
 	printOnly := fs.Bool("print-only", false, "print the planned setup without writing config")
 	reveal := fs.Bool("reveal", false, "show generated secrets in printed output")
@@ -151,9 +146,6 @@ func runSetup(args []string, stdout, stderr io.Writer) error {
 	generatedSecret := false
 
 	switch selectedMode {
-	case modeDemo:
-		cfg.APIKey = ""
-		cfg.AgentKeys = nil
 	case modeLocalBasic:
 		if strings.TrimSpace(cfg.APIKey) == "" {
 			cfg.APIKey, err = generateSecret()
@@ -202,24 +194,20 @@ func runSetup(args []string, stdout, stderr io.Writer) error {
 	} else {
 		p.KV("write", "ok")
 	}
-	if cfg.Mode != modeDemo {
-		switch {
-		case *printOnly && generatedSecret:
-			p.KV("secret", "generated for preview; not stored")
-		case *printOnly:
-			p.KV("secret", "reused from existing config; not shown")
-		case generatedSecret:
-			p.KV("secret", "generated and stored locally")
-		default:
-			p.KV("secret", "reused from existing config")
-		}
+	switch {
+	case *printOnly && generatedSecret:
+		p.KV("secret", "generated for preview; not stored")
+	case *printOnly:
+		p.KV("secret", "reused from existing config; not shown")
+	case generatedSecret:
+		p.KV("secret", "generated and stored locally")
+	default:
+		p.KV("secret", "reused from existing config")
 	}
 	if p.pretty {
 		p.Section("Service")
 	}
-	if cfg.Mode == modeDemo {
-		p.KV("service", "skipped (demo mode)")
-	} else if *printOnly {
+	if *printOnly {
 		p.KV("service", "skipped (--print-only)")
 	} else if cfg.Mode == modeLocalShared && !hasPostgresDSN(cfg) {
 		p.KV("service", "skipped (postgres dsn required for local-shared)")
@@ -295,7 +283,7 @@ func runConnect(args []string, stdout, stderr io.Writer) error {
 	}
 	fs := flag.NewFlagSet("connect", flag.ContinueOnError)
 	fs.SetOutput(stderr)
-	mode := fs.String("mode", "", "override setup mode for printed config: demo, local-basic, or local-shared")
+	mode := fs.String("mode", "", "override setup mode for printed config: local-basic or local-shared")
 	reveal := fs.Bool("reveal", false, "include stored secrets in printed commands")
 	transport := fs.String("transport", transportBridge, "MCP client transport to print: bridge or http")
 	apply := fs.Bool("apply", false, "apply supported client config instead of only printing it")
@@ -564,8 +552,6 @@ func normalizeMode(mode string) (string, error) {
 	switch strings.ToLower(strings.TrimSpace(mode)) {
 	case "", modeLocalBasic, "basic", "local":
 		return modeLocalBasic, nil
-	case modeDemo:
-		return modeDemo, nil
 	case modeLocalShared, "shared":
 		return modeLocalShared, nil
 	default:
@@ -637,24 +623,13 @@ func printConnectConfigBody(w io.Writer, client string, cfg userConfig, transpor
 		fmt.Fprintf(w, "%s\n", err)
 		return
 	}
-	if cfg.Mode == modeDemo {
-		if p.pretty && showHeader {
-			p.Header()
-			p.Section("Connect")
-			p.Hint("Demo mode runs a direct stdio MCP server.")
-		}
-		printStdioConfig(w, client, []string{"serve"})
-		return
-	}
 	if transport == transportBridge {
 		if p.pretty && showHeader {
 			p.Header()
 			p.Section("Connect")
 			p.Hint("Bridge transport keeps bearer tokens in Tuskbase-owned local config.")
 		}
-		if cfg.Mode != modeDemo {
-			fmt.Fprintf(w, "# Tuskbase bridge keeps bearer tokens in Tuskbase-owned local config.\n")
-		}
+		fmt.Fprintf(w, "# Tuskbase bridge keeps bearer tokens in Tuskbase-owned local config.\n")
 		bridgeClient := bridgeClientName(cfg, client)
 		printStdioConfig(w, client, []string{"bridge", "--client", bridgeClient})
 		return
@@ -789,9 +764,7 @@ func printAuthSummary(w io.Writer, cfg userConfig, reveal bool) {
 	}
 	p.KV("mode", cfg.Mode)
 	p.KV("auth_policy", authPolicyName(cfg))
-	if cfg.Mode != modeDemo {
-		p.KV("auth_source", "config")
-	}
+	p.KV("auth_source", "config")
 	switch cfg.Mode {
 	case modeLocalBasic:
 		if p.pretty {
@@ -910,9 +883,7 @@ func applyConnectConfig(client string, cfg userConfig, transport string, stdout,
 		return fmt.Errorf("--apply currently supports codex only; printed %s config instead", client)
 	}
 	args := []string{"mcp", "add", "tuskbase"}
-	if cfg.Mode == modeDemo {
-		args = append(args, "--", "tuskbase", "serve")
-	} else if transport == transportBridge {
+	if transport == transportBridge {
 		args = append(args, "--", "tuskbase", "bridge", "--client", bridgeClientName(cfg, client))
 	} else {
 		args = append(args, "--url", "http://"+cfg.Addr+"/mcp", "--bearer-token-env-var", tokenEnvVar(cfg, client))

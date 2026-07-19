@@ -186,8 +186,6 @@ func localSharedKeyPrincipal(key LocalSharedKey) app.Principal {
 	}
 }
 
-// TODO(hosted-auth): Add OAuth/API-key principal resolvers for Hosted without changing application use cases.
-
 func roleScopes(role string) []string {
 	switch role {
 	case roleReader:

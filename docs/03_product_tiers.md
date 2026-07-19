@@ -1,57 +1,22 @@
-# Tuskbase Product Tiers
+# Tuskbase Product Modes
 
-This document defines the intended product tiers for Tuskbase. It is direction, not a claim that every tier is implemented today.
+This document defines the product modes for Tuskbase. Tuskbase has two modes:
+Local Basic and Local Shared.
 
-Tuskbase should serve the same core workflow across every tier:
+Both modes serve the same core workflow:
 
 ```text
 attach -> lookup -> preflight -> remember
 ```
 
-The tiers differ by transport, storage, retrieval, and operational complexity.
+They differ by storage, retrieval, and operational complexity.
 
-## Tier Summary
+## Mode Summary
 
-| Tier | Primary user | MCP transport | Store | Retrieval | Setup goal |
+| Mode | Primary user | MCP transport | Store | Retrieval | Setup goal |
 |---|---|---|---|---|---|
-| Demo | Someone proving Tuskbase works | stdio MCP | SQLite | text search | one binary, no infrastructure |
 | Local Basic | Solo developer using one or more local agents on one machine | local daemon, stdio bridge to HTTP MCP | SQLite | text search, optional OpenAI embeddings | one Tuskbase interface always running |
 | Local Shared | Heavy solo developer or small local team setup using multiple agents/tools | local daemon, stdio bridge to HTTP MCP | Postgres with pgvector required | semantic pgvector retrieval when embeddings are configured, text fallback | robust shared decision memory |
-| Hosted | Future managed team product | managed HTTP MCP | managed Postgres | managed vector retrieval | no self-managed infrastructure |
-
-## Demo
-
-Demo is the lowest-friction proof that Tuskbase works.
-
-Shape:
-
-```text
-agent app -> tuskbase stdio MCP -> SQLite
-```
-
-Use when:
-
-- one user is evaluating Tuskbase,
-- one agent process is enough,
-- local-only memory is acceptable,
-- zero setup matters more than robustness.
-
-Technology:
-
-- stdio MCP,
-- SQLite,
-- deterministic text search,
-- no Docker,
-- no Postgres,
-- no embeddings required,
-- no HTTP endpoints required.
-
-Tradeoff:
-
-- each agent client may launch its own process,
-- memory is local to one machine,
-- not ideal for heavy parallel agent usage,
-- not designed for cross-machine continuity.
 
 ## Local Basic
 
@@ -80,7 +45,6 @@ Technology:
 - SQLite owned by the daemon,
 - text search by default,
 - optional OpenAI embeddings,
-- optional local embedding providers later.
 - compressed SQLite disaster-recovery backups outside the database path, including automatic backups after durable memory writes.
 
 Why SQLite can work here:
@@ -110,7 +74,7 @@ Use when:
 - a developer uses several coding agents heavily,
 - many windows/tools are active against the same repo,
 - decisions should survive and coordinate beyond a fragile local file,
-- the user may later want to continue across machines or move toward team usage.
+- the user wants a stronger local store while keeping Tuskbase self-managed.
 
 Current foundation:
 
@@ -272,32 +236,6 @@ Automatic retention keeps the latest 20 automatic backups by default and never p
 
 Backups cover Tuskbase memory only. They do not contain API keys, MCP client config, Docker credentials, or Docker volumes themselves.
 
-## Hosted
-
-Hosted is future-facing.
-
-Shape:
-
-```text
-agent app -> hosted Tuskbase HTTP MCP -> managed store
-```
-
-Use when:
-
-- teams want shared memory without running infrastructure,
-- cross-machine continuity matters,
-- auth, audit, billing, and managed operations are acceptable.
-
-Technology direction:
-
-- managed HTTP MCP,
-- managed Postgres,
-- pgvector by default,
-- Qdrant or another vector database only when scale requires it,
-- managed embedding provider chain,
-- workspace/org auth and audit,
-- OAuth or managed API keys mapped into the same internal principal model used by local keys.
-
 ## Vector Retrieval
 
 Vector search is a derived retrieval layer, not the source of truth.
@@ -311,12 +249,10 @@ Vector indexes help find related decisions.
 
 Recommended progression:
 
-| Tier | Vector strategy |
+| Mode | Vector strategy |
 |---|---|
-| Demo | none required, text search only |
 | Local Basic | optional OpenAI embeddings, text fallback |
 | Local Shared | pgvector default when embeddings are configured |
-| Hosted | pgvector first, Qdrant optional at scale |
 
 `pgvector` is not a lite version of Qdrant. It is the simplest serious vector path because it lives inside Postgres. Qdrant is a specialized vector database and should remain an optional scale adapter.
 
@@ -366,4 +302,4 @@ A dedicated temporal graph database should be deferred until real query needs pr
 
 ## Product Rule
 
-SQLite is the on-ramp. Postgres is the serious shared-memory path. pgvector is the default serious vector path. Qdrant is optional scale infrastructure. The same decision model and MCP tools should work across every tier.
+SQLite is the Local Basic path. Postgres is the Local Shared path. pgvector is the default serious vector path. Qdrant is optional scale infrastructure behind an adapter only if local usage proves the need. The same decision model and MCP tools should work across both product modes.

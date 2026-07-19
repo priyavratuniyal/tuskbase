@@ -16,7 +16,7 @@ import (
 	"github.com/priyavratuniyal/tuskbase/internal/ports"
 )
 
-// Config describes a daemon runtime, not a specific tier. Local Shared and Hosted should reuse this shape with stronger stores and auth.
+// Config describes a daemon runtime, not a specific storage mode.
 type Config struct {
 	Addr            string
 	MCPPath         string
@@ -37,7 +37,7 @@ type StoreBundle struct {
 	Name   string
 }
 
-// StoreFactory is the composition boundary for Demo, Local Basic, Local Shared, and future hosted deployments.
+// StoreFactory is the composition boundary for Local Basic and Local Shared storage.
 type StoreFactory interface {
 	Open(context.Context) (StoreBundle, error)
 }
@@ -49,15 +49,15 @@ type AuthPolicy interface {
 	Source() string
 }
 
-// NoAuthPolicy is acceptable for stdio Demo mode only; HTTP daemon modes should use an authenticated principal.
+// NoAuthPolicy is acceptable only for direct stdio runtime use; HTTP daemon modes should use an authenticated principal.
 type NoAuthPolicy struct{}
 
 func (NoAuthPolicy) WrapHTTP(h http.Handler) http.Handler { return h }
 func (NoAuthPolicy) Name() string                         { return "none" }
 func (NoAuthPolicy) Source() string                       { return "none" }
 
-// AuthPolicyLoader lets Local Basic, Local Shared, and future Hosted auth refresh
-// credentials without changing the daemon or application use cases.
+// AuthPolicyLoader lets local auth refresh credentials without changing the daemon
+// or application use cases.
 type AuthPolicyLoader func(context.Context) (AuthPolicy, error)
 
 type DynamicAuthPolicy struct {

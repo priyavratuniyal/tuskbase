@@ -87,7 +87,7 @@ func execute(ctx context.Context, args []string, stdout, stderr io.Writer) error
 	}
 }
 
-// runServe is the product front door: no flags means Demo stdio MCP, while --http-mcp turns the same core into the Local Basic daemon.
+// runServe is the low-level runtime entrypoint. Product setup uses the local daemon modes.
 func runServe(ctx context.Context, args []string, stdout, stderr io.Writer) error {
 	fs := flag.NewFlagSet("serve", flag.ContinueOnError)
 	fs.SetOutput(stderr)
@@ -230,7 +230,7 @@ func runDoctor(ctx context.Context, args []string, stdout, stderr io.Writer) err
 		storeCheck = checkRuntimeStore(ctx, cfg, store)
 	}
 	incompleteLocalShared := cfg.Mode == modeLocalShared && strings.TrimSpace(store.PostgresDSN) == ""
-	authPolicy, authErr := loadAuthPolicy(cfg.Mode != modeDemo)
+	authPolicy, authErr := loadAuthPolicy(true)
 	status := newLifecycleController().Status(ctx, cfg)
 	p := newPresenter(stdout)
 	if p.pretty {
@@ -338,38 +338,6 @@ func runDoctor(ctx context.Context, args []string, stdout, stderr io.Writer) err
 		p.Section("Next")
 	}
 	p.KV("clients", "codex, claude, cursor, generic (print with `tuskbase connect <client>`)")
-	return nil
-}
-
-func runInitMCP(args []string, stdout io.Writer) error {
-	client := "generic"
-	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
-		client = args[0]
-		args = args[1:]
-	}
-	fs := flag.NewFlagSet("init-mcp", flag.ContinueOnError)
-	mode := fs.String("mode", "demo", "demo or local-basic")
-	if err := fs.Parse(args); err != nil {
-		return err
-	}
-	if fs.NArg() > 0 {
-		client = fs.Arg(0)
-	}
-	exe, err := os.Executable()
-	if err != nil {
-		exe = "tuskbase"
-	}
-	switch strings.ToLower(*mode) {
-	case "demo":
-		fmt.Fprintf(stdout, "# %s MCP config for Tuskbase Demo\n", client)
-		fmt.Fprintf(stdout, "[mcp_servers.tuskbase]\ncommand = %q\nargs = [\"serve\"]\n", exe)
-	case "local-basic":
-		fmt.Fprintf(stdout, "# %s MCP config for Tuskbase Local Basic\n", client)
-		fmt.Fprintf(stdout, "[mcp_servers.tuskbase]\nurl = \"http://127.0.0.1:8765/mcp\"\n")
-		fmt.Fprintf(stdout, "# HTTP MCP requires Authorization: Bearer <TUSKBASE_API_KEY>.\n")
-	default:
-		return fmt.Errorf("unknown MCP mode %q", *mode)
-	}
 	return nil
 }
 
@@ -650,8 +618,7 @@ func printInit(w io.Writer) {
 		p.Line("Run the guided setup:\n")
 		p.Line("  tuskbase setup\n")
 		p.Hint("Recommended first path: Local Basic.")
-		p.Section("Advanced")
-		p.Line("  tuskbase setup --mode demo")
+		p.Section("Local Shared")
 		p.Line("  tuskbase setup --mode local-shared")
 		return
 	}
@@ -662,8 +629,7 @@ func printInit(w io.Writer) {
 Recommended first path: Local Basic.
 It generates a local secret, stores it privately, and prepares Tuskbase for Codex, Claude Code, or Cursor.
 
-Advanced paths:
-  tuskbase setup --mode demo
+Local Shared path:
   tuskbase setup --mode local-shared
 `)
 }

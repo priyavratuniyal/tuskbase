@@ -39,7 +39,6 @@ Implemented now:
 
 - Go CLI for setup, diagnostics, daemon lifecycle, and local key management.
 - MCP tools for automatic prepare/finish workflow plus `attach`, `context`, `lookup`, `check`, `preflight`, `remember`, `assess`, structured decision query, conflict resolution, reconciliation, stats, recent decisions, active conflicts, and reviewable repo-document imports.
-- Demo stdio MCP mode for quick local experiments.
 - Local Basic daemon mode with SQLite, loopback HTTP MCP, and stdio bridge auth.
 - Local Shared mode with Postgres selected from Docker-managed pgvector Postgres or an existing pgvector-enabled Postgres DSN.
 - Semantic active-memory lookup with pgvector when embeddings are configured, deterministic text fallback, preflight conflict detection, lookup receipts, and optional OpenAI or Ollama embeddings.
@@ -53,7 +52,6 @@ Deferred:
 
 - UI.
 - SDKs.
-- Hosted sync.
 - Package-manager wrappers and release-channel polish.
 
 ## Install From Source
@@ -106,7 +104,6 @@ tuskbase status
 
 | Mode | Store | Best For | Infrastructure |
 |---|---|---|---|
-| Demo | SQLite | Trying MCP tools with the least ceremony | None |
 | Local Basic | SQLite | One developer using local agents on one machine | Local daemon |
 | Local Shared | Postgres + pgvector extension | Heavier local multi-agent use or shared local memory | Docker or existing Postgres |
 
@@ -139,7 +136,7 @@ export TUSKBASE_EMBEDDING_MODEL=nomic-embed-text
 tuskbase daemon restart
 ```
 
-For the full setup matrix, Docker context notes, and inspectable templates, see [Product Tiers](docs/03_product_tiers.md#current-setup-paths) and [Local Shared Troubleshooting](docs/03_product_tiers.md#local-shared-troubleshooting).
+For the full setup matrix, Docker context notes, and inspectable templates, see [Product Modes](docs/03_product_tiers.md#current-setup-paths) and [Local Shared Troubleshooting](docs/03_product_tiers.md#local-shared-troubleshooting).
 
 ## Daily Commands
 
@@ -308,8 +305,8 @@ See [Agent Guide](AGENTS.md) for repo-specific development instructions.
 | [Product Brief](docs/00_product_brief.md) | Product identity, target users, core loop, and non-goals. |
 | [Architecture](docs/01_architecture.md) | Layering, interfaces, flows, and anti-drift rules. |
 | [Technology Direction](docs/02_tech_stack.md) | Current technology defaults and adapter boundaries. |
-| [Product Tiers](docs/03_product_tiers.md) | Demo, Local Basic, Local Shared, and Hosted product tier direction. |
-| [Auth And Security](docs/04_auth_security.md) | Tiered auth, identity, and security direction. |
+| [Product Modes](docs/03_product_tiers.md) | Local Basic and Local Shared product mode direction. |
+| [Auth And Security](docs/04_auth_security.md) | Local auth, identity, and security direction. |
 | [Security](SECURITY.md) | Vulnerability reporting and current security posture. |
 | [Changelog](CHANGELOG.md) | Release notes and notable project changes. |
 

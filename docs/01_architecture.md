@@ -100,7 +100,7 @@ A UI comes after the API and MCP flows are useful. SDKs come after the core cont
 
 Tuskbase starts local-first. Initial auth should be simple local authentication suitable for a developer machine.
 
-Phase 1 should not include cloud auth, enterprise governance, RBAC, or multi-tenant controls. Those can come later only if local value is already proven.
+Tuskbase should not include cloud auth, organization-wide governance, RBAC, or multi-tenant controls. Keep authentication local to Local Basic and Local Shared.
 
 ## Failure Policy
 
@@ -116,4 +116,4 @@ Phase 1 should not include cloud auth, enterprise governance, RBAC, or multi-ten
 - Keep API and MCP behavior backed by the same use cases; compact workspace context, conflict lifecycle, assessment feedback, reconciliation, and stats should stay in application services rather than MCP-only logic.
 - Treat storage, vector search, embeddings, UI, SDKs, queues, hooks, and optional CLI as adapters.
 - Prefer clear interfaces over hard-coded technology choices.
-- Avoid dashboard-first, SDK-first, cloud-first, or enterprise-first architecture in Phase 1.
+- Avoid dashboard-first, SDK-first, cloud-first, or organization-governance-first architecture.

@@ -23,7 +23,7 @@ const (
 
 var ErrForbidden = errors.New("forbidden")
 
-// Principal is the application-level identity contract. Local keys, hosted API
+// Principal is the application-level identity contract. Local keys and API
 // keys, and future OAuth flows should all resolve to this shape before use cases
 // see them.
 type Principal struct {

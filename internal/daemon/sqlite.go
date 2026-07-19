@@ -9,7 +9,8 @@ import (
 	"github.com/priyavratuniyal/tuskbase/internal/search"
 )
 
-// SQLiteStoreFactory powers Demo and Local Basic. It is a factory so Local Shared can add a Postgres factory without changing daemon wiring.
+// SQLiteStoreFactory powers Local Basic. It is a factory so Local Shared can use
+// Postgres without changing daemon wiring.
 type SQLiteStoreFactory struct {
 	Path      string
 	Embedding ports.EmbeddingProvider

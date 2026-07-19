@@ -1112,7 +1112,7 @@ LIMIT ?
 	return results, rows.Err()
 }
 
-// UpsertVector keeps SQLite useful for Local Basic demos; Local Shared should move vector search to pgvector or another VectorStore.
+// UpsertVector keeps SQLite useful for Local Basic; Local Shared should move vector search to pgvector or another VectorStore.
 func (s *Store) UpsertVector(ctx context.Context, record ports.VectorRecord) error {
 	if strings.TrimSpace(record.WorkspaceID) == "" || len(record.Vector) == 0 {
 		return nil

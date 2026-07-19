@@ -43,14 +43,11 @@ func TestUsagePrioritizesFriendlyCommands(t *testing.T) {
 	}
 }
 
-func TestInitMCPDemoCodexCompatibility(t *testing.T) {
+func TestInitMCPRejectsDemoMode(t *testing.T) {
 	var out, errb bytes.Buffer
-	if err := execute(context.Background(), []string{"init-mcp", "codex", "--mode", "demo"}, &out, &errb); err != nil {
-		t.Fatalf("execute(init-mcp demo) error = %v", err)
-	}
-	got := out.String()
-	if !strings.Contains(got, "codex mcp add tuskbase") || !strings.Contains(got, "tuskbase serve") {
-		t.Fatalf("demo config output = %q", got)
+	err := execute(context.Background(), []string{"init-mcp", "codex", "--mode", "demo"}, &out, &errb)
+	if err == nil || !strings.Contains(err.Error(), "unknown setup mode") {
+		t.Fatalf("execute(init-mcp demo) error = %v, want unsupported mode", err)
 	}
 }
 

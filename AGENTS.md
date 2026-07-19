@@ -58,7 +58,7 @@ provider and provisioning behavior.
 ## Documentation Rules
 
 Keep public docs honest about implementation status. Do not describe planned API
-routes, MCP tools, UI, SDKs, vector retrieval, hosted sync, or template behavior as
+routes, MCP tools, UI, SDKs, vector retrieval, cloud sync, or template behavior as
 available until code supports them. When changing product language, update `README.md`
 and the relevant file under `docs/` together.
 

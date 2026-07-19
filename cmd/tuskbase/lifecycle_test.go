@@ -242,20 +242,18 @@ func TestSetupLocalSharedExistingPostgresWithoutDSNFails(t *testing.T) {
 	}
 }
 
-func TestSetupDemoDoesNotInstallAutostart(t *testing.T) {
+func TestSetupRejectsDemoMode(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.json")
 	t.Setenv("TUSKBASE_CONFIG_PATH", path)
 	controller := &testLifecycleController{result: lifecycleResult{Backend: "test", State: "running"}}
 	withLifecycle(t, controller)
 	var out, errb bytes.Buffer
-	if err := execute(context.Background(), []string{"setup", "--mode", "demo", "--yes"}, &out, &errb); err != nil {
-		t.Fatalf("setup demo error = %v", err)
+	err := execute(context.Background(), []string{"setup", "--mode", "demo", "--yes"}, &out, &errb)
+	if err == nil || !strings.Contains(err.Error(), "unknown setup mode") {
+		t.Fatalf("setup demo error = %v, want unsupported mode", err)
 	}
 	if got := atomic.LoadInt32(&controller.installCalls); got != 0 {
 		t.Fatalf("InstallAndStart calls = %d, want 0", got)
-	}
-	if !strings.Contains(out.String(), "service: skipped (demo mode)") {
-		t.Fatalf("setup output = %q", out.String())
 	}
 }
 

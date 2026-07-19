@@ -31,29 +31,26 @@ These defaults are meant to make the first implementation practical while preser
 
 These choices should live at the edge of the system. Domain and application code should depend on interfaces rather than concrete libraries or services.
 
-The Postgres adapter is implemented as a `database/sql` adapter. The standard binary registers pgx stdlib. Local Shared can select Postgres from a Docker-managed pgvector container or an existing pgvector-enabled Postgres DSN; SQLite remains the Demo and Local Basic default. The older Supabase path is paused as a product focus.
+The Postgres adapter is implemented as a `database/sql` adapter. The standard binary registers pgx stdlib. Local Shared can select Postgres from a Docker-managed pgvector container or an existing pgvector-enabled Postgres DSN; SQLite remains the Local Basic default. The older Supabase path is paused as a product focus.
 
-## Product Tiers And Storage Direction
+## Product Modes And Storage Direction
 
-Tuskbase should grow through four product tiers. The same application core and decision model should remain stable across them.
+Tuskbase has two product modes. The same application core and decision model should remain stable across both.
 
-| Tier | Intended use | MCP transport | Durable store | Retrieval direction |
+| Mode | Intended use | MCP transport | Durable store | Retrieval direction |
 |---|---|---|---|---|
-| Demo | Prove Tuskbase works with the least setup | stdio MCP | SQLite | text search |
 | Local Basic | One developer using one or more local agents on one machine | stdio bridge to loopback HTTP MCP daemon | SQLite | text search, optional OpenAI embeddings |
 | Local Shared | Heavy local multi-agent usage or small shared setup | stdio bridge to loopback HTTP MCP daemon | Postgres with pgvector required | semantic pgvector retrieval with Ollama or OpenAI embeddings, text fallback |
-| Hosted | Future managed team product | managed HTTP MCP | managed Postgres | managed vector retrieval, Qdrant optional at scale |
 
-SQLite is the Demo and Local Basic default, not the ceiling for serious multi-agent workflows. Local Shared uses Postgres as the durable decision store through Docker-managed pgvector Postgres or an existing Postgres DSN. Semantic pgvector retrieval now builds on that foundation when Ollama or OpenAI embeddings are configured.
+SQLite is the Local Basic default, not the ceiling for serious multi-agent workflows. Local Shared uses Postgres as the durable decision store through Docker-managed pgvector Postgres or an existing Postgres DSN. Semantic pgvector retrieval now builds on that foundation when Ollama or OpenAI embeddings are configured.
 
 Vector search is a derived retrieval layer. Canonical decisions live in SQLite or Postgres first. pgvector is the default serious vector path because it keeps vectors with Postgres data. Qdrant or another vector database should remain an optional scale adapter, not a first-use requirement.
 
 Embeddings should be provider-based:
 
-- no embeddings required for Demo,
 - optional OpenAI embeddings for Local Basic,
-- Ollama or OpenAI embeddings for Local Shared, and eventually an embedded local model,
-- managed provider choices for Hosted later.
+- Ollama or OpenAI embeddings for Local Shared,
+- eventually an embedded local model if it can be shipped reliably.
 
 Temporal graph behavior should be modeled in the durable store first with decision relationships, conflicts, `valid_from`, `valid_to`, `transaction_time`, and status fields. A dedicated temporal graph database is deferred until real query needs prove the relational model insufficient.
 
@@ -85,7 +82,7 @@ The first useful version should run on a developer machine with:
 - no required cloud account,
 - no required external embedding service for tests.
 
-Cloud sync, multi-user governance, enterprise auth, and hosted operations come only after local value is proven.
+Cloud sync, managed operations, and organization-wide governance are outside the product direction.
 
 ## Future Direction
 
@@ -106,7 +103,7 @@ The initial build should avoid:
 - dashboard-first development,
 - SDK-first development,
 - cloud-first architecture,
-- enterprise governance workflows,
+- organization-wide governance workflows,
 - required external queues,
 - required dedicated graph databases,
 - required external embedding services for default tests.
